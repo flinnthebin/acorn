@@ -1,4 +1,5 @@
-use core::arch::asm;
+#![no_std]
+#![feature(asm)]
 
 // Machine Status Register
 // Machine Previous Privilege: MPP[1:0]
