@@ -1,6 +1,10 @@
 [package]
-name = "acorn"
+name = "mkfs"
 version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+
+[[bin]]
+name = "mkfs"
+path = "src/main.rs"
