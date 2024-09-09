@@ -21,7 +21,7 @@ pub fn read_mhartid() -> usize {
         asm!(
             "csrr {0}, {1}",
             out(reg) hartid,
-            CSR_MHARTID,
+            const CSR_MHARTID,
         );
     }
     hartid
@@ -53,4 +53,14 @@ pub fn write_mstatus(val: usize) {
 // Holds the address of an instruction that caused a machine-level exception
 // Address is saved when exception occurs and can be used to resume excecution or handle the exception
 
+// Writes instruction address to MEPC
+pub fn write_mepc(addr: usize) {
+    unsafe {
+        asm!(
+            "csrw mepc, {0}",
+            in(reg) addr,
+        );
+    }
+}
 
+// Supervisor Status Register (SSTATUS)
