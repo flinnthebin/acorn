@@ -1,5 +1,4 @@
-#![no_std]
-#![feature(asm)]
+use core::arch::asm;
 
 // Machine Status Register
 // Machine Previous Privilege: MPP[1:0]
@@ -14,16 +13,19 @@ const MSTATUS_MPP_S: u64 = 0b01 << 11; // isolates supervisor-mode value
 const MSTATUS_MPP_M: u64 = 0b11 << 11; // isolates machine-mode value
 const MSTATUS_MIE: u64 = 1 << 3; // sets bit 3 of mstatus register. 1 = enabled, 0 = disabled
 
-static CSR_MHARTID: u64 = 0xf14;
+// For RISC-V architecture, Machine Hardware Thread ID (MHARTID) = 0xf14
+const CSR_MHARTID: u64 = 0xf14;
 
-pub fn read_machine_hartid() -> u64 {
-    let hartid: u64;
+pub fn read_mhartid() -> usize {
+    let hartid: usize;
     unsafe {
         asm!(
             "csrr {0}, {1}",
             out(reg) hartid,
-            CSR_MHARTID
+            CSR_MHARTID,
         );
     }
     hartid
 }
+
+
