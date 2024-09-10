@@ -1,5 +1,5 @@
-use core::arch::asm;
 use crate::start;
+use core::arch::asm;
 
 #[no_mangle]
 pub extern "C" fn _entry() -> ! {
@@ -33,4 +33,3 @@ pub extern "C" fn spin() -> ! {
         }
     }
 }
-
