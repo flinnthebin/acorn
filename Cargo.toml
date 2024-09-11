@@ -4,9 +4,8 @@ version = "0.1.0"
 authors = ["Chris Flinn"]
 edition = "2021"
 
-[dependencies]
-
-[build-dependencies]
+[build]
+target = "riscv64gc-unknown-none-elf"
 
 [profile.dev]
 panic = "abort"
