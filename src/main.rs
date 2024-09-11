@@ -1,10 +1,13 @@
 #![no_std]
 
+use core::panic::PanicInfo;
+
 mod arch;
 mod console;
 mod entry;
 mod kalloc;
 mod proc;
+mod safety;
 mod sleeplock;
 mod spinlock;
 mod start;
@@ -14,8 +17,6 @@ mod trampoline;
 mod trap;
 mod uart;
 mod vm;
-
-use core::panic::PanicInfo;
 
 #[panic_handler]
 fn panic(_info: &PanicInfo) -> ! {

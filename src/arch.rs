@@ -69,26 +69,134 @@ pub fn read_mhartid() -> usize {
     read_csr!(MHARTID)
 }
 
+// Read/Write thread pointer, in this architecture holds core hartid
+// Core hartid serves as an index into cpus[]
+pub fn read_threadptr() -> usize {
+    let thread: usize;
+    unsafe {
+        asm!(
+            "mv {0}, tp",
+            out(reg) thread,
+            options(nostack, preserves_flags)
+        );
+    }
+    thread
+}
+
+pub fn write_threadptr(val: usize) {
+    unsafe {
+        asm!(
+            "mv tp, {0}",
+            in(reg) val,
+            options(nostack, preserves_flags)
+        );
+    }
+}
+
 // Machine Status Register (MSTATUS)
-// - Machine Previous Privilege (MPP[1:0]): 2-bit field indicating the previous privilege mode (M/S/U) before a trap
+// - Machine Previous Privilege (MPP[1:0]): 2-bit field indicating the previous privilege mode (U/S/M) before a trap
+
+trait MStatusField {
+    fn to_usize(self) -> usize;
+}
 
 const MPP_MASK: usize = 0b11 << 11; // Mask to isolate the MPP field
 
 #[repr(usize)]
 #[derive(Copy, Clone)]
-pub enum MStatVal {
-    MMV = 0b11 << 11, // Machine-mode value
+pub enum PrivilegeMode {
     UMV = 0b00 << 11, // User-mode value
     SMV = 0b01 << 11, // Supervisor-mode value
-    MIE = 1 << 3,     // Machine Interrupt Enable (1 = Enabled, 0 = Disabled)
+    MMV = 0b11 << 11, // Machine-mode value
+}
+
+impl MStatusField for PrivilegeMode {
+    fn to_usize(self) -> usize {
+        self as usize
+    }
+}
+
+#[repr(usize)]
+#[derive(Copy, Clone)]
+pub enum InterruptEnable {
+    UIE = 1 << 0, // User Interrupt Enable (1 = Enabled, 0 = Disabled)
+    SIE = 1 << 1, // Supervisor Interrupt Enable (1 = Enabled, 0 = Disabled)
+    MIE = 1 << 3, // Machine Interrupt Enable (1 = Enabled, 0 = Disabled)
+}
+
+impl MStatusField for InterruptEnable {
+    fn to_usize(self) -> usize {
+        self as usize
+    }
+}
+
+#[repr(usize)]
+#[derive(Copy, Clone)]
+pub enum PreviousInterruptEnable {
+    UPIE = 1 << 4, // User Previous Interrupt Enable
+    SPIE = 1 << 5, // Supervisor Previous Interrupt Enable
+    MPIE = 1 << 7, // Machine Previous Interrupt Enable
+}
+
+impl MStatusField for PreviousInterruptEnable {
+    fn to_usize(self) -> usize {
+        self as usize
+    }
+}
+
+#[repr(usize)]
+#[derive(Copy, Clone)]
+pub enum FloatingPointStatus {
+    OFF = 0b00 << 13,     // Floating-point unit off
+    INITIAL = 0b01 << 13, // Floating-point unit initial
+    CLEAN = 0b10 << 13,   // Floating-point unit clean
+    DIRTY = 0b11 << 13,   // Floating-point unit dirty
+}
+
+impl MStatusField for FloatingPointStatus {
+    fn to_usize(self) -> usize {
+        self as usize
+    }
+}
+
+#[repr(usize)]
+#[derive(Copy, Clone)]
+pub enum ExtensionStatus {
+    OFF = 0b00 << 15,     // Floating-point unit off
+    INITIAL = 0b01 << 15, // Floating-point unit initial
+    CLEAN = 0b10 << 15,   // Floating-point unit clean
+    DIRTY = 0b11 << 15,   // Floating-point unit dirty
+}
+
+impl MStatusField for ExtensionStatus {
+    fn to_usize(self) -> usize {
+        self as usize
+    }
+}
+
+#[repr(usize)]
+#[derive(Copy, Clone)]
+pub enum AdditionalStatus {
+    MPRV = 1 << 17, // Modify Privilege
+    SUM = 1 << 18,  // Supervisor User Memory Access
+    MXR = 1 << 19,  // Make Executable Readable
+    TVM = 1 << 20,  // Trap Virtual Memory
+    TW = 1 << 21,   // Timeout Wait
+    TSR = 1 << 22,  // Trap SRET
+}
+
+impl MStatusField for AdditionalStatus {
+    fn to_usize(self) -> usize {
+        self as usize
+    }
 }
 
 pub fn read_mstatus() -> usize {
     read_csr!(MSTATUS)
 }
 
-pub fn write_mstatus(val: MStatVal) {
-    write_csr!(MSTATUS, val)
+pub fn write_mstatus<T: MStatusField>(val: T) {
+    write_csr!(MSTATUS, val.to_usize());
 }
 
 // Machine Exception Delegation
@@ -187,24 +295,55 @@ pub fn read_mcycle() -> usize {
 //             |_|
 
 // Supervisor Status Register (SSTATUS)
+trait SStatusField {
+    fn to_usize(self) -> usize;
+}
+
 #[repr(usize)]
 #[derive(Copy, Clone)]
-pub enum SStatVal {
-    SPP = 0b01 << 8,  // Supervisor Previous Privilege (1 = Supervisor, 0 = User)
-    SPIE = 0b01 << 5, // Supervisor Previous Interrupt Enable
+pub enum PrivilegeModeSStatus {
+    SPP = 0b01 << 8, // Supervisor Previous Privilege (1 = Supervisor, 0 = User)
+}
+
+impl SStatusField for PrivilegeModeSStatus {
+    fn to_usize(self) -> usize {
+        self as usize
+    }
+}
+
+#[repr(usize)]
+#[derive(Copy, Clone)]
+pub enum InterruptEnableSStatus {
+    UIE = 0b01 << 0, // User Interrupt Enable (1 = Enabled, 0 = Disabled)
+    SIE = 0b01 << 1, // Supervisor Interrupt Enable (1 = Enabled, 0 = Disabled)
+}
+
+impl SStatusField for InterruptEnableSStatus {
+    fn to_usize(self) -> usize {
+        self as usize
+    }
+}
+
+#[repr(usize)]
+#[derive(Copy, Clone)]
+pub enum PreviousInterruptEnableSStatus {
     UPIE = 0b01 << 4, // User Previous Interrupt Enable
-    SIE = 0b01 << 1,  // Supervisor Interrupt Enable
-    UIE = 0b01 << 0,  // User Interrupt Enable
+    SPIE = 0b01 << 5, // Supervisor Previous Interrupt Enable
+}
+
+impl SStatusField for PreviousInterruptEnableSStatus {
+    fn to_usize(self) -> usize {
+        self as usize
+    }
 }
 
 pub fn read_sstatus() -> usize {
     read_csr!(SSTATUS)
 }
 
-pub fn write_sstatus(val: SStatVal) {
-    write_csr!(SSTATUS, val)
+pub fn write_sstatus<T: SStatusField>(val: T) {
+    write_csr!(SSTATUS, val.to_usize());
 }
-
 // Supervisor Interrupt Enable
 // Controls the enabling/disabling of various interrupts in supervisor mode
 
@@ -319,12 +458,12 @@ pub fn write_stimecmp(val: usize) {
     write_csr!(STIMECMP, val)
 }
 
-//  ____  _               _           _   __  __
-// |  _ \| |__  _   _ ___(_) ___ __ _| | |  \/  | ___ _ __ ___   ___  _ __ _   _
-// | |_) | '_ \| | | / __| |/ __/ _` | | | |\/| |/ _ \ '_ ` _ \ / _ \| '__| | | |
-// |  __/| | | | |_| \__ \ | (_| (_| | | | |  | |  __/ | | | | | (_) | |  | |_| |
-// |_|   |_| |_|\__, |___/_|\___\__,_|_| |_|  |_|\___|_| |_| |_|\___/|_|   \__, |
-//              |___/                                                      |___/
+//  __  __
+// |  \/  | ___ _ __ ___   ___  _ __ _   _
+// | |\/| |/ _ \ '_ ` _ \ / _ \| '__| | | |
+// | |  | |  __/ | | | | | (_) | |  | |_| |
+// |_|  |_|\___|_| |_| |_|\___/|_|   \__, |
+//                                   |___/
 
 // Physical Memory Protection Configuration Register 0
 // Configures regions 0-3 of PMP, controls permission settings (r/w/x) + addressing mode
@@ -346,4 +485,37 @@ pub fn read_pmpaddr0() -> usize {
 
 pub fn write_pmpaddr0(val: usize) {
     write_csr!(PMPADDR0, val)
+}
+
+// Return Address Register
+// Holds the return address of a function, continution point for program execution
+
+pub fn read_return_addr() -> usize {
+    let addr: usize;
+    unsafe {
+        asm!(
+            "mv {0}, ra",
+            out(reg) addr,
+            options(nostack, preserves_flags)
+        );
+    }
+    addr
+}
+
+pub fn write_return_addr(val: usize) {
+    unsafe {
+        asm!(
+            "mv ra, {0}",
+            in(reg) val,
+            options(nostack, preserves_flags)
+        );
+    }
+}
+
+// Flush the Translation Lookaside Buffer
+
+pub fn flush_tlb() {
+    unsafe {
+        asm!("sfence.vma zero, zero", options(nostack, preserves_flags));
+    }
 }
