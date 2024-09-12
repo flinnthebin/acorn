@@ -202,28 +202,73 @@ pub fn write_mstatus<T: MStatusField>(val: T) {
 // Machine Exception Delegation
 // Delegates exceptions from machine mode to supervisor mode
 
+#[repr(usize)]
+#[derive(Copy, Clone)]
+pub enum MedelegVal {
+    InstructionAddressMisaligned = 0b01 << 0,
+    InstructionAccessFault = 0b01 << 1,
+    IllegalInstruction = 0b01 << 2,
+    Breakpoint = 0b01 << 3,
+    LoadAddressMisaligned = 0b01 << 4,
+    LoadAccessFault = 0b01 << 5,
+    StoreAddressMisaligned = 0b01 << 6,
+    StoreAccessFault = 0b01 << 7,
+    EnvironmentCallFromUMode = 0b01 << 8,
+    EnvironmentCallFromSMode = 0b01 << 9,
+    InstructionPageFault = 0b01 << 12,
+    LoadPageFault = 0b01 << 13,
+    StorePageFault = 0b01 << 15,
+}
+
+impl MedelegField for MedelegVal {
+    fn to_usize(self) -> usize {
+        self as usize
+    }
+}
+
 pub fn read_medeleg() -> usize {
     read_csr!(MEDELEG)
 }
 
-pub fn write_medeleg(val: usize) {
-    write_csr!(MEDELEG, val)
+pub fn write_medeleg<T: MedelegField>(val: T) {
+    write_csr!(MEDELEG, val.to_usize());
 }
-
 // Machine Interrupt Delegation
 // Delegates interrupts from machine mode to supervisor mode
 //
+
+trait MidelegField {
+    fn to_usize(self) -> usize;
+}
+
+#[repr(usize)]
+#[derive(Copy, Clone)]
+pub enum MidelegVal {
+    // Supervisor Level Machine-Mode
+    SSIE = 1 << 1, // Software
+    STIE = 1 << 5, // Timer (Hardware)
+    SEIE = 1 << 9, // External (Hardware [I/O])
+}
+
+impl MidelegField for MidelegVal {
+    fn to_usize(self) -> usize {
+        self as usize
+    }
+}
 
 pub fn read_mideleg() -> usize {
     read_csr!(MIDELEG)
 }
 
-pub fn write_mideleg(val: usize) {
-    write_csr!(MIDELEG, val)
+pub fn write_mideleg<T: MidelegField>(val: T) {
+    write_csr!(MIDELEG, val.to_usize());
 }
-
 // Machine Interrupt Enable
 // Controls the enabling/disabling of various interrupts in machine mode
+
+trait MieField {
+    fn to_usize(self) -> usize;
+}
 
 #[repr(usize)]
 #[derive(Copy, Clone)]
@@ -238,14 +283,21 @@ pub enum MieVal {
     SEIE = 0b01 << 9, // External (Hardware [I/O])
 }
 
+impl MieField for MieVal {
+    fn to_usize(self) -> usize {
+        self as usize
+    }
+}
+
+// Function to read the MIE CSR
 pub fn read_mie() -> usize {
     read_csr!(MIE)
 }
 
-pub fn write_mie(val: MieVal) {
-    write_csr!(MIE, val)
+// Function to write to the MIE CSR
+pub fn write_mie<T: MieField>(val: T) {
+    write_csr!(MIE, val.to_usize());
 }
-
 // Machine-Mode Counter Enable
 // Controls the availability of performance counters (cycle, time, instruction) to lower privilege modes
 
