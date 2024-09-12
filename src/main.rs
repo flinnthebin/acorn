@@ -6,6 +6,7 @@ mod arch;
 mod console;
 mod entry;
 mod kalloc;
+mod memset;
 mod proc;
 mod safety;
 mod sleeplock;

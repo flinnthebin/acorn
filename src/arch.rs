@@ -1,3 +1,4 @@
+use crate::memset::ValidAddress;
 use core::arch::asm;
 
 // Control and Status Register (CSR) Addresses
@@ -202,6 +203,9 @@ pub fn write_mstatus<T: MStatusField>(val: T) {
 // Machine Exception Delegation
 // Delegates exceptions from machine mode to supervisor mode
 
+trait MedelegField {
+    fn to_usize(self) -> usize;
+}
 #[repr(usize)]
 #[derive(Copy, Clone)]
 pub enum MedelegVal {
@@ -233,6 +237,7 @@ pub fn read_medeleg() -> usize {
 pub fn write_medeleg<T: MedelegField>(val: T) {
     write_csr!(MEDELEG, val.to_usize());
 }
+
 // Machine Interrupt Delegation
 // Delegates interrupts from machine mode to supervisor mode
 //
@@ -289,35 +294,114 @@ impl MieField for MieVal {
     }
 }
 
-// Function to read the MIE CSR
 pub fn read_mie() -> usize {
     read_csr!(MIE)
 }
 
-// Function to write to the MIE CSR
 pub fn write_mie<T: MieField>(val: T) {
     write_csr!(MIE, val.to_usize());
 }
 // Machine-Mode Counter Enable
 // Controls the availability of performance counters (cycle, time, instruction) to lower privilege modes
 
+trait MCounterenField {
+    fn to_usize(self) -> usize;
+}
+
+#[repr(usize)]
+#[derive(Copy, Clone)]
+pub enum MCounterenVal {
+    CY = 0b01 << 0,     // Cycle counter
+    TM = 0b01 << 1,     // Timer
+    IR = 0b01 << 2,     // Instructions-retired counter
+    HPM3 = 0b01 << 3,   // Performance-monitoring counter 3
+    HPM4 = 0b01 << 4,   // Performance-monitoring counter 4
+    HPM5 = 0b01 << 5,   // Performance-monitoring counter 5
+    HPM6 = 0b01 << 6,   // Performance-monitoring counter 6
+    HPM7 = 0b01 << 7,   // Performance-monitoring counter 7
+    HPM8 = 0b01 << 8,   // Performance-monitoring counter 8
+    HPM9 = 0b01 << 9,   // Performance-monitoring counter 9
+    HPM10 = 0b01 << 10, // Performance-monitoring counter 10
+    HPM11 = 0b01 << 11, // Performance-monitoring counter 11
+    HPM12 = 0b01 << 12, // Performance-monitoring counter 12
+    HPM13 = 0b01 << 13, // Performance-monitoring counter 13
+    HPM14 = 0b01 << 14, // Performance-monitoring counter 14
+    HPM15 = 0b01 << 15, // Performance-monitoring counter 15
+    HPM16 = 0b01 << 16, // Performance-monitoring counter 16
+    HPM17 = 0b01 << 17, // Performance-monitoring counter 17
+    HPM18 = 0b01 << 18, // Performance-monitoring counter 18
+    HPM19 = 0b01 << 19, // Performance-monitoring counter 19
+    HPM20 = 0b01 << 20, // Performance-monitoring counter 20
+    HPM21 = 0b01 << 21, // Performance-monitoring counter 21
+    HPM22 = 0b01 << 22, // Performance-monitoring counter 22
+    HPM23 = 0b01 << 23, // Performance-monitoring counter 23
+    HPM24 = 0b01 << 24, // Performance-monitoring counter 24
+    HPM25 = 0b01 << 25, // Performance-monitoring counter 25
+    HPM26 = 0b01 << 26, // Performance-monitoring counter 26
+    HPM27 = 0b01 << 27, // Performance-monitoring counter 27
+    HPM28 = 0b01 << 28, // Performance-monitoring counter 28
+    HPM29 = 0b01 << 29, // Performance-monitoring counter 29
+    HPM30 = 0b01 << 30, // Performance-monitoring counter 30
+    HPM31 = 0b01 << 31, // Performance-monitoring counter 31
+}
+
+impl MCounterenField for MCounterenVal {
+    fn to_usize(self) -> usize {
+        self as usize
+    }
+}
+
 pub fn read_mcounteren() -> usize {
     read_csr!(MCOUNTEREN)
 }
 
-pub fn write_mcounteren(val: usize) {
-    write_csr!(MCOUNTEREN, val)
+pub fn write_mcounteren<T: MCounterenField>(val: T) {
+    write_csr!(MCOUNTEREN, val.to_usize());
 }
 
 // Machine Environment Configuration
 // Configures environment settings i.e. memory protection attributes, cacheability
 
+trait MenvcfgField {
+    fn to_usize(self) -> usize;
+}
+
+#[repr(usize)]
+#[derive(Copy, Clone)]
+pub enum MenvcfgVal {
+    FIOM = 1 << 0,   // Fast I/O Memory
+    CBIE = 1 << 1,   // Control Block Interrupt Enable
+    CBZE = 1 << 2,   // Control Block Zero Enable
+    PMA = 1 << 3,    // Physical Memory Attributes
+    PMA1 = 1 << 4,   // Physical Memory Attributes 1
+    PMA2 = 1 << 5,   // Physical Memory Attributes 2
+    PMA3 = 1 << 6,   // Physical Memory Attributes 3
+    PMA4 = 1 << 7,   // Physical Memory Attributes 4
+    PMA5 = 1 << 8,   // Physical Memory Attributes 5
+    PMA6 = 1 << 9,   // Physical Memory Attributes 6
+    PMA7 = 1 << 10,  // Physical Memory Attributes 7
+    PMA8 = 1 << 11,  // Physical Memory Attributes 8
+    PMA9 = 1 << 12,  // Physical Memory Attributes 9
+    PMA10 = 1 << 13, // Physical Memory Attributes 10
+    PMA11 = 1 << 14, // Physical Memory Attributes 11
+    PMA12 = 1 << 15, // Physical Memory Attributes 12
+    PMA13 = 1 << 16, // Physical Memory Attributes 13
+    PMA14 = 1 << 17, // Physical Memory Attributes 14
+    PMA15 = 1 << 18, // Physical Memory Attributes 15
+}
+
+impl MenvcfgField for MenvcfgVal {
+    fn to_usize(self) -> usize {
+        self as usize
+    }
+}
+
 pub fn read_menvcfg() -> usize {
     read_csr!(MENVCFG)
 }
 
-pub fn write_menvcfg(val: usize) {
-    write_csr!(MENVCFG, val)
+pub fn write_menvcfg<T: MenvcfgField>(val: T) {
+    write_csr!(MENVCFG, val.to_usize());
 }
 
 // Machine Exception Program Counter
@@ -328,8 +412,8 @@ pub fn read_mepc() -> usize {
     read_csr!(MEPC)
 }
 
-pub fn write_mepc(addr: usize) {
-    write_csr!(MEPC, addr)
+pub fn write_mepc(addr: ValidAddress) {
+    write_csr!(MEPC, addr.get());
 }
 
 // Machine-Mode Cycle Counter
@@ -399,22 +483,31 @@ pub fn write_sstatus<T: SStatusField>(val: T) {
 // Supervisor Interrupt Enable
 // Controls the enabling/disabling of various interrupts in supervisor mode
 
+trait SieField {
+    fn to_usize(self) -> usize;
+}
+
 #[repr(usize)]
 #[derive(Copy, Clone)]
 pub enum SieVal {
-    SSIE = 0b01 << 1, // Software
-    STIE = 0b01 << 5, // Timer (Hardware)
-    SEIE = 0b01 << 9, // External (Hardware [I/O])
+    SSIE = 1 << 1, // Software
+    STIE = 1 << 5, // Timer (Hardware)
+    SEIE = 1 << 9, // External (Hardware [I/O])
+}
+
+impl SieField for SieVal {
+    fn to_usize(self) -> usize {
+        self as usize
+    }
 }
 
 pub fn read_sie() -> usize {
     read_csr!(SIE)
 }
 
-pub fn write_sie(val: SieVal) {
-    write_csr!(SIE, val)
+pub fn write_sie<T: SieField>(val: T) {
+    write_csr!(SIE, val.to_usize());
 }
-
 // Supervisor Trap-Vector Base Address
 // Sets base address of trap handler routine for supervisor mode
 
@@ -422,10 +515,9 @@ pub fn read_stvec() -> usize {
     read_csr!(STVEC)
 }
 
-pub fn write_stvec(val: usize) {
-    write_csr!(STVEC, val)
+pub fn write_stvec(addr: ValidAddress) {
+    write_csr!(STVEC, addr.get());
 }
-
 // Supervisor Exception Program Counter
 // Holds the address of an instruction that caused a supervisor-level exception
 // Address is saved when exception occurs prior to trap handler routine. Can be used to resume execution or handle the exception
@@ -434,18 +526,56 @@ pub fn read_sepc() -> usize {
     read_csr!(SEPC)
 }
 
-pub fn write_sepc(val: usize) {
-    write_csr!(SEPC, val)
+pub fn write_sepc(addr: ValidAddress) {
+    write_csr!(SEPC, addr.get())
 }
 
 // Supervisor Trap Cause
 // Holds cause of last trap (exception/interrupt) occurence in supervisor mode
 
+trait ScauseField {
+    fn to_usize(self) -> usize;
+}
+
+#[repr(usize)]
+#[derive(Copy, Clone, Debug)]
+pub enum ScauseVal {
+    // Exception codes
+    InstructionAddressMisaligned = 0,
+    InstructionAccessFault = 1,
+    IllegalInstruction = 2,
+    Breakpoint = 3,
+    LoadAddressMisaligned = 4,
+    LoadAccessFault = 5,
+    StoreAddressMisaligned = 6,
+    StoreAccessFault = 7,
+    EnvironmentCallFromUMode = 8,
+    EnvironmentCallFromSMode = 9,
+    InstructionPageFault = 12,
+    LoadPageFault = 13,
+    StorePageFault = 15,
+    // Interrupt codes (bit 63 set to 1)
+    UserSoftwareInterrupt = 0x8000000000000000 | 0,
+    SupervisorSoftwareInterrupt = 0x8000000000000000 | 1,
+    UserTimerInterrupt = 0x8000000000000000 | 4,
+    SupervisorTimerInterrupt = 0x8000000000000000 | 5,
+    UserExternalInterrupt = 0x8000000000000000 | 8,
+    SupervisorExternalInterrupt = 0x8000000000000000 | 9,
+}
+
+impl ScauseField for ScauseVal {
+    fn to_usize(self) -> usize {
+        self as usize
+    }
+}
+
 pub fn read_scause() -> usize {
     read_csr!(SCAUSE)
 }
-pub fn write_scause(val: usize) {
-    write_csr!(SCAUSE, val)
+
+// Typically not used as SCAUSE is set by hardware when trap occurs, but included for completeness
+pub fn write_scause<T: ScauseField>(val: T) {
+    write_csr!(SCAUSE, val.to_usize());
 }
 
 // Supervisor Trap Value
@@ -455,13 +585,17 @@ pub fn read_stval() -> usize {
     read_csr!(STVAL)
 }
 
-pub fn write_stval(val: usize) {
-    write_csr!(STVAL, val)
+pub fn write_stval(addr: ValidAddress) {
+    write_csr!(STVAL, addr.get())
 }
 
 // Supervisor Interrupt Pending
 // Each register bit corresponds to a specific interrupt type
 // If set, interrupt is pending and waiting to be serviced
+
+trait SipField {
+    fn to_usize(self) -> usize;
+}
 
 #[repr(usize)]
 #[derive(Copy, Clone)]
@@ -475,19 +609,36 @@ pub fn read_sip() -> usize {
     read_csr!(SIP)
 }
 
-pub fn write_sip(val: SipVal) {
-    write_csr!(SIP, val)
+pub fn write_sip<T: SipField>(val: T) {
+    write_csr!(SIP, val.to_usize());
 }
 
 // Supervisor Address Translation and Protection
 // Manages address translation/protection, page table configuration and ASIDs
 // Integral component in supervisor mode establishment of virtual memory space
 
-// RISC-V Sv39 Page Table Schema
-const SATP_SV39: usize = 8 << 60;
+trait SatpField {
+    fn to_usize(self) -> usize;
+}
 
-fn make_satp(pagetable: usize) -> usize {
-    SATP_SV39 | (pagetable >> 12)
+// RISC-V Address Translation Modes
+#[repr(usize)]
+#[derive(Copy, Clone)]
+pub enum SatpMode {
+    Bare = 0,       // No translation or protection
+    Sv39 = 8 << 60, // Sv39 page-based 39-bit virtual addressing
+    Sv48 = 9 << 60, // Sv48 page-based 48-bit virtual addressing
+}
+
+impl SatpField for SatpMode {
+    fn to_usize(self) -> usize {
+        self as usize
+    }
+}
+
+// Create an SATP value given a page table base address and mode
+pub fn make_satp<T: SatpField>(pagetable: usize, mode: T) -> usize {
+    mode.to_usize() | (pagetable >> 12)
 }
 
 pub fn read_satp() -> usize {
@@ -497,7 +648,6 @@ pub fn read_satp() -> usize {
 pub fn write_satp(val: usize) {
     write_csr!(SATP, val)
 }
-
 // Supervisor Timer Comparison
 // Memory-mapped register in Core Local Interruptor (CLINT), not defined in standard CSR set
 // Triggers timer interrupts for supervisor mode when STIME == STIMECMP
@@ -506,8 +656,8 @@ pub fn read_stimecmp() -> usize {
     read_csr!(STIMECMP)
 }
 
-pub fn write_stimecmp(val: usize) {
-    write_csr!(STIMECMP, val)
+pub fn write_stimecmp(val: TimerCompareValue) {
+    write_csr!(STIMECMP, val.get())
 }
 
 //  __  __
@@ -520,12 +670,32 @@ pub fn write_stimecmp(val: usize) {
 // Physical Memory Protection Configuration Register 0
 // Configures regions 0-3 of PMP, controls permission settings (r/w/x) + addressing mode
 
+trait PmpcfgField {
+    fn to_usize(self) -> usize;
+}
+
+#[repr(usize)]
+#[derive(Copy, Clone)]
+pub enum PmpcfgVal {
+    R = 1 << 0,  // Read permission
+    W = 1 << 1,  // Write permission
+    X = 1 << 2,  // Execute permission
+    A = 1 << 3,  // Address-matching mode
+    L = 1 << 7,  // Lock bit
+}
+
+impl PmpcfgField for PmpcfgVal {
+    fn to_usize(self) -> usize {
+        self as usize
+    }
+}
+
 pub fn read_pmpcfg0() -> usize {
     read_csr!(PMPCFG0)
 }
 
-pub fn write_pmpcfg0(val: usize) {
-    write_csr!(PMPCFG0, val)
+pub fn write_pmpcfg0<T: PmpcfgField>(val: T) {
+    write_csr!(PMPCFG0, val.to_usize());
 }
 
 // Physical Memory Protection Address Register 0
@@ -535,8 +705,8 @@ pub fn read_pmpaddr0() -> usize {
     read_csr!(PMPADDR0)
 }
 
-pub fn write_pmpaddr0(val: usize) {
-    write_csr!(PMPADDR0, val)
+pub fn write_pmpaddr0(val: ValidAddress) {
+    write_csr!(PMPADDR0, addr.get())
 }
 
 // Return Address Register
@@ -554,7 +724,7 @@ pub fn read_return_addr() -> usize {
     addr
 }
 
-pub fn write_return_addr(val: usize) {
+pub fn write_return_addr(val: ValidAddress) {
     unsafe {
         asm!(
             "mv ra, {0}",
