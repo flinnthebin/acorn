@@ -1,20 +1,8 @@
 [package]
 name = "acorn"
 version = "0.1.0"
-authors = ["Chris Flinn"]
-edition = "2021"
+edition = "2024"
 
-[build]
-target = "riscv64gc-unknown-none-elf"
-
-[profile.dev]
-panic = "abort"
-opt-level = "z"
-
-[profile.release]
-panic = "abort"
-opt-level = "z"
-
-[[bin]]
-name = "acorn"
-path = "src/main.rs"
+[dependencies]
+libc = "0.2.190"
+syscalls = "0.8.1"

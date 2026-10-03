@@ -1,2 +1,1 @@
 # acorn
-a corn kernel
