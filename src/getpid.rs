@@ -21,7 +21,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn it_works() {
+    fn getpids() {
         let child = getpid();
         let parent = getppid();
         println!("\nThe child process is: {child} and the parent process is: {parent}")
